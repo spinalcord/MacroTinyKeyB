@@ -24,6 +24,8 @@ class MainWindow(QMainWindow):
     
     def __init__(self):
         super().__init__()
+
+
         self.config_manager = ConfigManager()
         self.dir_manager = MacroDirectoryManager()
         self.config_dir, self.keys_dir = self.dir_manager.setup_directories()
@@ -31,6 +33,10 @@ class MainWindow(QMainWindow):
         self.keyboard_scanner = KeyboardScanner()
         self.monitor_thread = None
         
+        # Start minimized if enabled
+        if self.config_manager.should_start_minimized():
+            QTimer.singleShot(0, self.hide)
+
         self.init_ui()
         self.init_tray()
         self.load_keyboards()
@@ -42,6 +48,8 @@ class MainWindow(QMainWindow):
         # Auto-start monitoring if enabled
         if self.config_manager.should_auto_start_monitoring():
             QTimer.singleShot(1000, self.try_auto_start_monitoring)
+
+
     
     def init_ui(self):
         """Initialize the user interface."""
@@ -84,6 +92,11 @@ class MainWindow(QMainWindow):
         self.auto_start_cb.setChecked(self.config_manager.should_auto_start_monitoring())
         self.auto_start_cb.toggled.connect(self.config_manager.set_auto_start_monitoring)
         settings_layout.addWidget(self.auto_start_cb, 0, 1)
+
+        self.start_minimized_cb = QCheckBox("Start minimized")
+        self.start_minimized_cb.setChecked(self.config_manager.should_start_minimized())
+        self.start_minimized_cb.toggled.connect(self.config_manager.set_start_minimized)
+        settings_layout.addWidget(self.start_minimized_cb, 0, 2)
         
         # Row 2
         self.minimize_tray_cb = QCheckBox("Minimize to tray")

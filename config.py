@@ -53,3 +53,11 @@ class ConfigManager:
     def set_minimize_to_tray(self, enabled: bool) -> None:
         """Set minimize to tray preference."""
         self.settings.setValue("minimize_to_tray", enabled)
+
+    def should_start_minimized(self) -> bool:
+        """Check if the application should start minimized."""
+        return self.settings.value("start_minimized", False, type=bool)
+
+    def set_start_minimized(self, enabled: bool) -> None:
+        """Set the preference for starting the application minimized."""
+        self.settings.setValue("start_minimized", enabled)
