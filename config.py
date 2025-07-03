@@ -54,6 +54,14 @@ class ConfigManager:
         """Set minimize to tray preference."""
         self.settings.setValue("minimize_to_tray", enabled)
 
+    def has_shown_minimize_to_tray_message(self) -> bool:
+        """Check if the minimize to tray message has been shown."""
+        return self.settings.value("shown_minimize_to_tray_message", False, type=bool)
+
+    def set_shown_minimize_to_tray_message(self, shown: bool) -> None:
+        """Set whether the minimize to tray message has been shown."""
+        self.settings.setValue("shown_minimize_to_tray_message", shown)
+
     def should_start_minimized(self) -> bool:
         """Check if the application should start minimized."""
         return self.settings.value("start_minimized", False, type=bool)

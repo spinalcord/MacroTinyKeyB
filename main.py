@@ -7,32 +7,89 @@ for each key press. Features a GUI that can minimize to system tray.
 
 Features:
 - GUI interface with system tray support
+- Single instance enforcement (prevents multiple launches)
 - Blocks selected keyboard from other applications
 - Auto-creates Lua scripts for each key press
 - Executes custom macros immediately
 - Real-time log display
 - Configuration management
 
-Author: Enhanced with PyQt5 GUI
+Author: Enhanced with PyQt5 GUI and Single Instance
 License: MIT
 """
 
 import sys
-import subprocess # Added this import
+import subprocess
+import os
+import tempfile
+import atexit
 from PyQt5.QtWidgets import QApplication, QMessageBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QSystemTrayIcon
 
 from gui import MainWindow
-import os
+
+def is_already_running():
+    """Check if another instance is already running."""
+    lock_file = os.path.join(tempfile.gettempdir(), "MacroTinyKeyB.lock")
+    
+    if os.path.exists(lock_file):
+        try:
+            with open(lock_file, 'r') as f:
+                pid = int(f.read().strip())
+            
+            # Check if process is still running
+            if os.name == 'posix':
+                try:
+                    os.kill(pid, 0)  # Check if process exists
+                    return True
+                except OSError:
+                    # Process doesn't exist, remove stale lock file
+                    os.remove(lock_file)
+            else:
+                # Windows - simple check
+                import subprocess
+                result = subprocess.run(['tasklist', '/FI', f'PID eq {pid}'], 
+                                      capture_output=True, text=True)
+                if str(pid) in result.stdout:
+                    return True
+                else:
+                    os.remove(lock_file)
+        except:
+            # Invalid lock file, remove it
+            if os.path.exists(lock_file):
+                os.remove(lock_file)
+    
+    # Create lock file
+    with open(lock_file, 'w') as f:
+        f.write(str(os.getpid()))
+    
+    # Clean up on exit
+    def cleanup():
+        if os.path.exists(lock_file):
+            os.remove(lock_file)
+    atexit.register(cleanup)
+    
+    return False
 
 def main():
     """Main entry point."""
+    
+    # Check if already running
+    if is_already_running():
+        # Show message and exit
+        temp_app = QApplication(sys.argv)
+        QMessageBox.warning(None, "MacroTinyKeyB", 
+                           "MacroTinyKeyB is already running!\n\n"
+                           "Please check the system tray for the icon.")
+        sys.exit(1)
+    
+    # Create main application
     app = QApplication(sys.argv)
-    app.setQuitOnLastWindowClosed(False)  # Keep running when window is closed
+    app.setQuitOnLastWindowClosed(False)
     
     # Check if user is in 'input' group
-    if os.name == 'posix': # Only relevant for Unix-like systems
+    if os.name == 'posix':
         username = os.getenv('USER')
         if username:
             try:

@@ -223,6 +223,10 @@ class MainWindow(QMainWindow):
         tray_menu.addAction(hide_action)
         
         tray_menu.addSeparator()
+
+        open_scripts_action = QAction("Open Scripts Folder", self)
+        open_scripts_action.triggered.connect(self.open_scripts_folder)
+        tray_menu.addAction(open_scripts_action)
         
         quit_action = QAction("Quit", self)
         quit_action.triggered.connect(self.quit_application)
@@ -373,11 +377,13 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         """Handle window close event."""
         if self.config_manager.should_minimize_to_tray() and self.tray_icon.isVisible():
-            QMessageBox.information(
-                self, "MacroTinyKeyB",
-                "The application will keep running in the system tray. "
-                "To terminate the program, choose 'Quit' from the context menu."
-            )
+            if not self.config_manager.has_shown_minimize_to_tray_message():
+                QMessageBox.information(
+                    self, "MacroTinyKeyB",
+                    "The application will keep running in the system tray. "
+                    "To terminate the program, choose 'Quit' from the system tray context menu."
+                )
+                self.config_manager.set_shown_minimize_to_tray_message(True)
             self.hide()
             event.ignore()
         else:
