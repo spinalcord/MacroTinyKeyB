@@ -20,6 +20,7 @@ class LuaScriptManager:
         self.lua.globals().python_print = self._lua_print_redirect
         self.lua.globals().insert_text = self._lua_insert_text
         self.lua.globals().run_command = self._lua_run_command
+        self.lua.globals().run_command_async = self._lua_run_command_async
     
     def _check_lua_installation(self) -> bool:
         """Check if Lua is installed on the system."""
@@ -47,6 +48,10 @@ print("Key {key_name} was pressed!")
 -- For more complex actions:
 -- os.execute("firefox https://google.com")
 -- os.execute("code ~/Documents")
+
+-- To run a command asynchronously (non-blocking):
+-- run_command_async("konsole")
+-- run_command_async("firefox https://google.com")
 
 -- Clipboard operations:
 -- To get clipboard content:
@@ -117,6 +122,16 @@ print("Key {key_name} was pressed!")
         except Exception as e:
             self.lua_output_buffer.append(f"Unexpected error running command '{command_string}': {e}")
             return f"Error: {e}"
+
+    def _lua_run_command_async(self, command_string: str):
+        """
+        Executes a shell command in a non-blocking way.
+        """
+        try:
+            subprocess.Popen(command_string, shell=True)
+            self.lua_output_buffer.append(f"Async command launched: '{command_string}'")
+        except Exception as e:
+            self.lua_output_buffer.append(f"Error launching async command '{command_string}': {e}")
 
     def execute_script(self, script_path: Path, key_name: str) -> Tuple[bool, str]:
         """Execute a Lua script and return success status and output."""

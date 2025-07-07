@@ -3,8 +3,8 @@ MacroTinyKeyB is a Linux-exclusive tool (currently) that transforms any secondar
 
 | Name            | Language | Speed           | Permissions                             | Rendering Issues                  | Complexity           | Compatiblity          |
 |------------------|----------|------------------|----------------------------------------|-----------------------------------|----------------------|----------------------|
-| MacroTinyKeyb 👍   | Python   | Slightly slower   | Requires one-time input permission via terminal      | No rendering issues because of Qt | Low complexity       | x11/xwayland
-| MacroKeyb(Deprecated)        | Rust     | Fast             | Requires full sudo rights every time   | Rendering issues due to Tauri    | Very complicated duo to Rust safe threading      | x11/wayland
+| MacroTinyKeyb 👍   | Python   | Slightly slower   | Requires one-time input permission via terminal      | No rendering issues because of Qt | Low complexity       | x11/wayland
+| MacroKeyb(Deprecated)        | Rust     | Fast             | Requires full sudo rights every time   | Rendering issues due to Tauri    | Very complicated duo to Rust safe threading      | x11/xwayland
 
 
 ![image](https://github.com/user-attachments/assets/5fa86ad9-30f9-48ee-8476-2f2e61763477)
