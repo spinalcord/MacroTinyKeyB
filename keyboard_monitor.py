@@ -3,6 +3,7 @@ from select import select
 from PyQt5.QtCore import QThread, pyqtSignal
 from lua_manager import LuaScriptManager
 from key_mapping import KeyMapper
+import os # Import os for opening files
 
 class KeyboardMonitorThread(QThread):
     """Thread for monitoring keyboard events."""
@@ -17,6 +18,7 @@ class KeyboardMonitorThread(QThread):
         self.script_manager = script_manager
         self.device = None
         self.running = False
+        self.pressed_keys = set() # To keep track of currently pressed keys
     
     def run(self):
         """Main monitoring loop."""
@@ -39,7 +41,10 @@ class KeyboardMonitorThread(QThread):
                             if event.type == evdev.ecodes.EV_KEY:
                                 key_event = evdev.categorize(event)
                                 if key_event.keystate == evdev.KeyEvent.key_down:
+                                    self.pressed_keys.add(key_event.keycode)
                                     self._process_key(key_event.keycode)
+                                elif key_event.keystate == evdev.KeyEvent.key_up:
+                                    self.pressed_keys.discard(key_event.keycode)
                     except OSError:
                         self.device_disconnected.emit()
                         break
@@ -49,8 +54,19 @@ class KeyboardMonitorThread(QThread):
     
     def _process_key(self, keycode: str):
         """Process a single key press."""
+        
+        # If only RCTRL is pressed, do nothing.
+        if keycode == 'KEY_RIGHTCTRL' and len(self.pressed_keys) == 1:
+            return
+
         filename = KeyMapper.keycode_to_filename(keycode)
         script_path = self.script_manager.keys_dir / f"{filename}.lua"
+        
+        # Check for rctrl + other key combination
+        if 'KEY_RIGHTCTRL' in self.pressed_keys and keycode != 'KEY_RIGHTCTRL':
+            self.log_message.emit(f"Right Control + {filename} pressed. Opening {filename}.lua for editing.", "info")
+            self.script_manager.open_lua_file_in_editor(script_path)
+            return # Do not execute the script, just open the file
         
         if not script_path.exists():
             self.script_manager.create_default_script(filename, script_path)

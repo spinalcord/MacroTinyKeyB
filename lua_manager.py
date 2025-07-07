@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Tuple
 import lupa
 import os
+import sys # Import sys for platform detection
 from clipboard_utils import get_clipboard_content, set_clipboard_content
 
 class LuaScriptManager:
@@ -150,3 +151,18 @@ print("Key {key_name} was pressed!")
             
         except Exception as e:
             return False, f"Error executing script via Lupa: {e}"
+
+    def open_lua_file_in_editor(self, script_path: Path):
+        """Opens the specified Lua file in the default text editor."""
+        try:
+            if os.name == 'nt':  # For Windows
+                os.startfile(script_path)
+            elif sys.platform == 'darwin':  # For macOS
+                subprocess.Popen(['open', script_path])
+            else:  # For Linux and other POSIX systems
+                subprocess.Popen(['xdg-open', script_path])
+            self.lua_output_buffer.append(f"Opened {script_path} in default editor.")
+        except FileNotFoundError:
+            self.lua_output_buffer.append(f"Error: Could not find a suitable application to open {script_path}.")
+        except Exception as e:
+            self.lua_output_buffer.append(f"Error opening {script_path}: {e}")
