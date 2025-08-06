@@ -151,18 +151,117 @@ print("Key {key_name} was pressed!")
             
         except Exception as e:
             return False, f"Error executing script via Lupa: {e}"
-
     def open_lua_file_in_editor(self, script_path: Path):
-        """Opens the specified Lua file in the default text editor."""
+        """Opens the specified Lua file in a text editor with better Linux support."""
         try:
-            if os.name == 'nt':  # For Windows
+            if os.name == 'nt':  # Windows
                 os.startfile(script_path)
-            elif sys.platform == 'darwin':  # For macOS
+                self.lua_output_buffer.append(f"Opened {script_path} in default editor.")
+            elif sys.platform == 'darwin':  # macOS
                 subprocess.Popen(['open', script_path])
-            else:  # For Linux and other POSIX systems
-                subprocess.Popen(['xdg-open', script_path])
-            self.lua_output_buffer.append(f"Opened {script_path} in default editor.")
-        except FileNotFoundError:
-            self.lua_output_buffer.append(f"Error: Could not find a suitable application to open {script_path}.")
+                self.lua_output_buffer.append(f"Opened {script_path} in default editor.")
+            else:  # Linux and other POSIX systems
+                # Try multiple editors in order of preference
+                editors = [
+                    # Check environment variables first
+                    os.environ.get('VISUAL'),
+                    os.environ.get('EDITOR'),
+                    # GUI editors (more user-friendly)
+                    'gedit',        # GNOME
+                    'kate',         # KDE
+                    'mousepad',     # XFCE
+                    'leafpad',      # LXDE
+                    'pluma',        # MATE
+                    'xed',          # Linux Mint
+                    'kwrite',       # KDE alternative
+                    'gnome-text-editor',  # New GNOME text editor
+                    # Advanced editors
+                    'code',         # Visual Studio Code
+                    'codium',       # VSCodium
+                    'sublime_text', # Sublime Text
+                    'atom',         # Atom (legacy)
+                    # Terminal editors as fallback
+                    'nano',
+                    'vim',
+                    'vi',
+                    'emacs'
+                ]
+                
+                # Remove None values (unset environment variables)
+                editors = [editor for editor in editors if editor]
+                
+                editor_found = False
+                for editor in editors:
+                    try:
+                        # Check if editor exists
+                        if subprocess.run(['which', editor], capture_output=True).returncode == 0:
+                            # Try to open with this editor
+                            if editor in ['nano', 'vim', 'vi', 'emacs']:
+                                # Terminal editors - open in a new terminal window
+                                terminal_commands = [
+                                    ['gnome-terminal', '--', editor, str(script_path)],
+                                    ['konsole', '-e', editor, str(script_path)],
+                                    ['xfce4-terminal', '-e', f'{editor} {script_path}'],
+                                    ['xterm', '-e', editor, str(script_path)],
+                                    ['mate-terminal', '-e', f'{editor} {script_path}'],
+                                ]
+                                
+                                terminal_opened = False
+                                for term_cmd in terminal_commands:
+                                    try:
+                                        subprocess.Popen(term_cmd)
+                                        terminal_opened = True
+                                        break
+                                    except FileNotFoundError:
+                                        continue
+                                
+                                if terminal_opened:
+                                    self.lua_output_buffer.append(f"Opened {script_path} with {editor} in terminal.")
+                                    editor_found = True
+                                    break
+                                else:
+                                    continue  # Try next editor
+                            else:
+                                # GUI editors
+                                subprocess.Popen([editor, str(script_path)])
+                                self.lua_output_buffer.append(f"Opened {script_path} with {editor}.")
+                                editor_found = True
+                                break
+                    except (FileNotFoundError, subprocess.SubprocessError):
+                        continue
+                
+                if not editor_found:
+                    # Last resort: try xdg-open but with MIME type specification
+                    try:
+                        # Try to force text editor by setting MIME type
+                        subprocess.Popen(['xdg-open', str(script_path)])
+                        self.lua_output_buffer.append(f"Opened {script_path} with xdg-open (fallback).")
+                        self.lua_output_buffer.append("Note: If wrong application opened, set EDITOR environment variable.")
+                    except Exception:
+                        # Final fallback: print the file path for manual opening
+                        self.lua_output_buffer.append(f"Could not open editor automatically.")
+                        self.lua_output_buffer.append(f"Please open manually: {script_path}")
+                        
         except Exception as e:
             self.lua_output_buffer.append(f"Error opening {script_path}: {e}")
+            self.lua_output_buffer.append(f"Please open manually: {script_path}")
+
+    def get_preferred_editor(self) -> str:
+        """Get the user's preferred text editor."""
+        # Check environment variables
+        for env_var in ['VISUAL', 'EDITOR']:
+            editor = os.environ.get(env_var)
+            if editor:
+                return editor
+        
+        # Check for common GUI editors
+        gui_editors = ['gedit', 'kate', 'mousepad', 'pluma', 'xed', 'code', 'codium']
+        for editor in gui_editors:
+            if subprocess.run(['which', editor], capture_output=True).returncode == 0:
+                return editor
+        
+        # Fallback to nano if available
+        if subprocess.run(['which', 'nano'], capture_output=True).returncode == 0:
+            return 'nano'
+        
+        return None

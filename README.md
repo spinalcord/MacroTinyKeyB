@@ -18,6 +18,8 @@ In a Nutshell
 - Write lua code in it
 - Fire you macro
 
+Quick Change: Press `Right-Ctrl+<AnyKey>` to open the macro in your preffered text editor.
+
 ![image](https://github.com/user-attachments/assets/eec4cf30-2f17-44c8-8fbf-809a144da81a)
 
 # Build
