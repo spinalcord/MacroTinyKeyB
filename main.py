@@ -2,7 +2,7 @@
 """
 MacroTinyKeyB - Keyboard Macro System with System Tray
 
-A PyQt5-based system that intercepts keyboard input and executes corresponding Lua scripts
+A PyQt6-based system that intercepts keyboard input and executes corresponding Lua scripts
 for each key press. Features a GUI that can minimize to system tray.
 
 Features:
@@ -14,7 +14,7 @@ Features:
 - Real-time log display
 - Configuration management
 
-Author: Enhanced with PyQt5 GUI and Single Instance
+Author: Enhanced with PyQt6 GUI and Single Instance
 License: MIT
 """
 
@@ -23,9 +23,9 @@ import subprocess
 import os
 import tempfile
 import atexit
-from PyQt5.QtWidgets import QApplication, QMessageBox
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QSystemTrayIcon
+from PyQt6.QtWidgets import QApplication, QMessageBox
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QSystemTrayIcon
 
 from gui import MainWindow
 
@@ -118,7 +118,7 @@ def main():
     window = MainWindow()
     window.show()
     
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

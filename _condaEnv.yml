@@ -4,9 +4,8 @@ channels:
   - defaults
 dependencies:
   - python=3.11  # Kompatible Version für lupa
-  - pyqt=5.15.*
+  - pyqt=6.*  # Updated to PyQt6
   - evdev>=1.4.0
   - lupa>=1.10
   - pip
   - pyperclip
-

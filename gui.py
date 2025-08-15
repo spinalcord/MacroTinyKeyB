@@ -3,13 +3,13 @@ import time
 import subprocess
 from pathlib import Path
 
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QTextEdit, QComboBox, QPushButton, 
-                             QLabel, QSystemTrayIcon, QMenu, QAction, QMessageBox,
+                             QLabel, QSystemTrayIcon, QMenu, QMessageBox,
                              QSplitter, QGroupBox, QCheckBox, QSpinBox, QFrame,
                              QGridLayout, QTabWidget)
-from PyQt5.QtCore import QThread, pyqtSignal, QTimer, Qt, QSettings
-from PyQt5.QtGui import QIcon, QFont, QPixmap, QPainter, QColor
+from PyQt6.QtCore import QThread, pyqtSignal, QTimer, Qt, QSettings
+from PyQt6.QtGui import QIcon, QFont, QPixmap, QPainter, QColor, QAction, QTextCursor
 
 from config import ConfigManager
 from directories import MacroDirectoryManager
@@ -179,7 +179,7 @@ class MainWindow(QMainWindow):
         
         # Status Bar
         status_frame = QFrame()
-        status_frame.setFrameStyle(QFrame.StyledPanel)
+        status_frame.setFrameStyle(QFrame.Shape.StyledPanel)
         status_layout = QHBoxLayout(status_frame)
         status_layout.setContentsMargins(5, 5, 5, 5)
         
@@ -205,7 +205,7 @@ class MainWindow(QMainWindow):
         pixmap.fill(QColor(64, 128, 255))
         painter = QPainter(pixmap)
         painter.setPen(QColor(255, 255, 255))
-        painter.drawText(pixmap.rect(), Qt.AlignCenter, "M")
+        painter.drawText(pixmap.rect(), Qt.AlignmentFlag.AlignCenter, "M")
         painter.end()
         
         self.tray_icon.setIcon(QIcon(pixmap))
@@ -330,8 +330,8 @@ class MainWindow(QMainWindow):
             self.system_log.append(f"[{filename}] {output}")
         
         # Auto-scroll
-        self.key_log.moveCursor(self.key_log.textCursor().End)
-        self.system_log.moveCursor(self.system_log.textCursor().End)
+        self.key_log.moveCursor(QTextCursor.MoveOperation.End)
+        self.system_log.moveCursor(QTextCursor.MoveOperation.End)
     
     def on_device_disconnected(self):
         """Handle device disconnection."""
@@ -358,7 +358,7 @@ class MainWindow(QMainWindow):
         timestamp = time.strftime("%H:%M:%S")
         prefix = {"info": "INFO", "warning": "WARNING", "error": "ERROR"}.get(level, "INFO")
         self.system_log.append(f"[{timestamp}] {prefix}: {message}")
-        self.system_log.moveCursor(self.system_log.textCursor().End)
+        self.system_log.moveCursor(QTextCursor.MoveOperation.End)
     
     def show_window(self):
         """Show the main window."""
@@ -368,9 +368,9 @@ class MainWindow(QMainWindow):
     
     def tray_activated(self, reason):
         """Handle tray icon activation."""
-        if reason == QSystemTrayIcon.DoubleClick:
+        if reason == QSystemTrayIcon.ActivationReason.DoubleClick:
             self.show_window()
-        elif reason == QSystemTrayIcon.Trigger:  # Left click
+        elif reason == QSystemTrayIcon.ActivationReason.Trigger:  # Left click
             # Alternative: Show window on left click, menu on right click
             self.show_window()
     

@@ -1,9 +1,10 @@
 import evdev
 from select import select
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
 from lua_manager import LuaScriptManager
 from key_mapping import KeyMapper
-import os # Import os for opening files
+import os  # Import os for opening files
+
 
 class KeyboardMonitorThread(QThread):
     """Thread for monitoring keyboard events."""
@@ -18,7 +19,7 @@ class KeyboardMonitorThread(QThread):
         self.script_manager = script_manager
         self.device = None
         self.running = False
-        self.pressed_keys = set() # To keep track of currently pressed keys
+        self.pressed_keys = set()  # To keep track of currently pressed keys
     
     def run(self):
         """Main monitoring loop."""
@@ -58,7 +59,6 @@ class KeyboardMonitorThread(QThread):
         # If only RCTRL is pressed, do nothing.
         if keycode == 'KEY_RIGHTCTRL' and len(self.pressed_keys) == 1:
             return
-
         filename = KeyMapper.keycode_to_filename(keycode)
         script_path = self.script_manager.keys_dir / f"{filename}.lua"
         
@@ -66,7 +66,7 @@ class KeyboardMonitorThread(QThread):
         if 'KEY_RIGHTCTRL' in self.pressed_keys and keycode != 'KEY_RIGHTCTRL':
             self.log_message.emit(f"Right Control + {filename} pressed. Opening {filename}.lua for editing.", "info")
             self.script_manager.open_lua_file_in_editor(script_path)
-            return # Do not execute the script, just open the file
+            return  # Do not execute the script, just open the file
         
         if not script_path.exists():
             self.script_manager.create_default_script(filename, script_path)
