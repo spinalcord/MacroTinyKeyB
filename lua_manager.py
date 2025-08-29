@@ -78,24 +78,35 @@ print("Key {key_name} was pressed!")
         """Redirects Lua print statements to a Python buffer."""
         self.lua_output_buffer.append(" ".join(str(arg) for arg in args))
 
-    def _lua_insert_text(self, text: str):
+    def _lua_insert_text(self, text: str, delay_ms: int = 100):
         """
         Backs up clipboard, inserts text, triggers paste, and restores clipboard.
         Requires xdotool to be installed for paste command.
+        
+        Args:
+            text: The text to insert
+            delay_ms: Delay in milliseconds before triggering paste (default: 100ms)
         """
+        import time
+        
         original_clipboard = get_clipboard_content()
         set_clipboard_content(text)
+        
+        # Wait for the specified delay to ensure clipboard is updated
+        time.sleep(delay_ms / 1000.0)  # Convert milliseconds to seconds
         
         # Trigger paste command (Ctrl+V) using xdotool
         # This assumes xdotool is installed on the system.
         try:
             subprocess.run(['xdotool', 'key', 'control+v'], check=True)
-            self.lua_output_buffer.append(f"Inserted text: '{text[:50]}...'")
+            self.lua_output_buffer.append(f"Inserted text: '{text[:50]}...' (delay: {delay_ms}ms)")
         except FileNotFoundError:
             self.lua_output_buffer.append("Error: xdotool not found. Cannot trigger paste.")
         except subprocess.CalledProcessError as e:
             self.lua_output_buffer.append(f"Error triggering paste with xdotool: {e}")
         finally:
+            # Small additional delay before restoring clipboard to avoid race condition
+            time.sleep(0.05)  # 50ms additional delay
             # Restore original clipboard content
             set_clipboard_content(original_clipboard)
 
