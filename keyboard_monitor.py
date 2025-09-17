@@ -8,19 +8,20 @@ import os  # Import os for opening files
 
 class KeyboardMonitorThread(QThread):
     """Thread for monitoring keyboard events."""
-    
+
     key_pressed = pyqtSignal(str, str, bool, str)  # keycode, filename, success, output
     device_disconnected = pyqtSignal()
     log_message = pyqtSignal(str, str)  # message, level (info, warning, error)
-    
-    def __init__(self, device_path: str, script_manager: LuaScriptManager):
+
+    def __init__(self, device_path: str, script_manager: LuaScriptManager, config_manager):
         super().__init__()
         self.device_path = device_path
         self.script_manager = script_manager
+        self.config_manager = config_manager
         self.device = None
         self.running = False
         self.pressed_keys = set()  # To keep track of currently pressed keys
-    
+
     def run(self):
         """Main monitoring loop."""
         try:
@@ -30,9 +31,9 @@ class KeyboardMonitorThread(QThread):
                 self.log_message.emit("Keyboard successfully grabbed", "info")
             except OSError:
                 self.log_message.emit("Could not grab keyboard - other programs may still receive events", "warning")
-            
+
             self.running = True
-            
+
             while self.running:
                 r, w, x = select([self.device], [], [], 0.1)
                 if r:
@@ -49,32 +50,36 @@ class KeyboardMonitorThread(QThread):
                     except OSError:
                         self.device_disconnected.emit()
                         break
-                        
+
         except Exception as e:
             self.log_message.emit(f"Error in keyboard monitoring: {e}", "error")
-    
+
     def _process_key(self, keycode: str):
         """Process a single key press."""
-        
+
         # If only RCTRL is pressed, do nothing.
         if keycode == 'KEY_RIGHTCTRL' and len(self.pressed_keys) == 1:
             return
+
         filename = KeyMapper.keycode_to_filename(keycode)
         script_path = self.script_manager.keys_dir / f"{filename}.lua"
-        
+
         # Check for rctrl + other key combination
         if 'KEY_RIGHTCTRL' in self.pressed_keys and keycode != 'KEY_RIGHTCTRL':
             self.log_message.emit(f"Right Control + {filename} pressed. Opening {filename}.lua for editing.", "info")
-            self.script_manager.open_lua_file_in_editor(script_path)
-            return  # Do not execute the script, just open the file
-        
+
+            # Get editor path from config manager
+            editor_path = self.config_manager.get_editor_path()
+            self.script_manager.open_lua_file_in_editor(script_path, editor_path)
+            return  # Do not execute the script, just open the filep
+
         if not script_path.exists():
             self.script_manager.create_default_script(filename, script_path)
             self.log_message.emit(f"Created new script: {filename}.lua", "info")
-        
+
         success, output = self.script_manager.execute_script(script_path, filename)
         self.key_pressed.emit(keycode, filename, success, output)
-    
+
     def stop(self):
         """Stop the monitoring thread."""
         self.running = False
